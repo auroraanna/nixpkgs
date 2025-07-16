@@ -1,59 +1,64 @@
-{
-  stdenvNoCC,
-  lib,
-  fetchzip,
-  fetchurl,
-  makeWrapper,
-  makeDesktopItem,
-  copyDesktopItems,
-  jre,
+# taken from https://discourse.nixos.org/t/packaging-maven-project/47000
+{ lib
+, jre
+, makeWrapper
+, copyDesktopItems
+, makeDesktopItem
+, maven
+, fetchFromGitLab
+, fetchurl
 }:
 let
-  # we cache potentially unstable upstream inputs (icon and .zip file) via https://web.archive.org - this is a standard procedure in Nixpkgs
+  pname = "filius";
+  version = "2.9.3";
+  # TODO: ask upstream maintainers to add the 128px icon to the filius repo on gitlab
+  # asked (https://gitlab.com/filius1/filius/-/issues/130)
   icon128 = fetchurl {
-    url = "https://web.archive.org/web/20240623123147/https://dl.flathub.org/repo/appstream/x86_64/icons/128x128/de.lernsoftware_filius.Filius.png";
-    hash = "sha256-xES6RWf2KiNsukD6GwTuPyiDI6SseADGLb1AkBSTgd8=";
-  };
-  icon32 = fetchurl {
-    url = "https://gitlab.com/filius1/filius/-/raw/09fa7d5bdc60d5b4a2ab0e24311d54516a400913/src/deb/filius32.png";
-    hash = "sha256-sVsViRALhiVJFSxfVb9K6Q4M7Y2UEvZh6oOB9BQumh8=";
-  };
-  mimetype_xml = fetchurl {
-    url = "https://gitlab.com/filius1/filius/-/raw/09fa7d5bdc60d5b4a2ab0e24311d54516a400913/src/deb/application-filius-project.xml";
-    hash = "sha256-tChNuWlMuQtGeavQm12FDXCacfPTzFY8p/646WZnHDI=";
+    url = "https://www.lernsoftware-filius.de/.cm4all/uproc.php/0/.filius128.png/picture-1200?_=17db3de0a08";
+    hash = "sha256-+qJ963SyIAMylDOAAbD/v1qZl1Z3PQIi1FgsTp0e6i4=";
   };
 in
-stdenvNoCC.mkDerivation (finalAttrs: {
-  pname = "filius";
+maven.buildMavenPackage {
+  inherit pname version;
 
-  # UPDATE instructions
-  #
-  # - Open https://www.lernsoftware-filius.de/Herunterladen and copy download link to clipboard.
-  #   (e.g. https://www.lernsoftware-filius.de/downloads/Setup/filius-2.5.1.zip)
-  # - identify the new version string.
-  version = "2.6.1";
-
-  # - Open http://web.archive.org and paste download link from clipboard into "Save Page Now" field and hit the "Save Page" button.
-  # - Unselect "Save Error Pages" and hit "Save Page" again.
-  # - Wait for the archive link to be generated and copy it to the url field - adjust hash accordingly.
-  src = fetchzip {
-    url = "https://web.archive.org/web/20240829130608/https://www.lernsoftware-filius.de/downloads/Setup/filius-2.6.1.zip";
-    hash = "sha256-vrzImMorA1BPA7LRjyZ2pXqLT9ry8qx7Jps5uyTZDp8=";
-    stripRoot = false;
+  src = fetchFromGitLab {
+    owner = "filius1";
+    repo = pname;
+    # they seem to have stopped using the "v" prefix since 2.9.3
+    tag = version;
+    hash = "sha256-izF41keZjpefHmHNeWI9gXfpMcFscYnSNu/et7GOXXc=";
   };
+
+  mvnHash = "sha256-6Qq/7vgA9bWQK+k66qORNwvLKMR1U5yb95DJMWaDq/k=";
+  mvnParameters = "-Plinux";
+
+  # tests want to create an X11 window which isn't often feasable
+  doCheck = false;
+
+  postPatch = ''
+    # seems like the developers don't understand how icons work in freedesktop
+    # TODO: upstream
+    # made a MR: https://gitlab.com/filius1/filius/-/merge_requests/41
+    substituteInPlace src/deb/application-filius-project.xml --replace '<icon name="filius32"/>' '<icon name="filius"/>'
+    substituteInPlace src/deb/filius.desktop --replace 'Icon=filius32' 'Icon=filius'
+    substituteInPlace src/deb/filius.desktop --replace 'Exec=/usr/share/filius/filius.sh' 'Exec=filius'
+  '';
 
   nativeBuildInputs = [
     makeWrapper
     copyDesktopItems
   ];
 
-  desktopItems = [
+  # using provided .desktop file instead
+  # TODO: upstream additions to .desktop file
+  # made a MR: https://gitlab.com/filius1/filius/-/merge_requests/41
+  /*desktopItems = [
     (makeDesktopItem {
       type = "Application";
-      name = "Filius";
+      name = "filius";
       desktopName = "Filius";
       genericName = "Computer network simulator";
-      comment = "A Computer network simulator for secondary schools";
+      comment = "A computer network simulator for secondary schools";
       icon = "filius";
       exec = "filius";
       terminal = false;
@@ -62,54 +67,54 @@ stdenvNoCC.mkDerivation (finalAttrs: {
       startupNotify = false;
       extraConfig = {
         "GenericName[en]" = "Computer network simulator";
-        "GenericName[de]" = "Computer-Netzwerksimulator";
+        "GenericName[de]" = "Computernetzwerk-Simulator";
         "Comment[en]" = "A computer network simulator for secondary schools";
-        "Comment[de]" = "Ein Computer-Netzwerksimulator für Bildungszwecke";
+        "Comment[de]" = "Ein Computernetzwerk-Simulator für Bildungszwecke";
       };
     })
-  ];
-
-  dontConfigure = true;
-  dontBuild = true;
+  ];*/
 
   installPhase = ''
     runHook preInstall
 
-    export CUSTOM_LIBS=$out/share/java
-    export JAR=$CUSTOM_LIBS/filius.jar
+    mkdir -p $out/bin $out/share/${pname}
+    cp -r ./target/* $out/share/${pname}
 
-    # "install -D" creates missing folders
-    install -D filius.jar $JAR
-    cp -r . $CUSTOM_LIBS/
-
-    makeWrapper ${jre}/bin/java $out/bin/filius \
-      --add-flags "-Duser.dir=$CUSTOM_LIBS/" \
-      --add-flags "-jar $JAR" \
-      --add-flags '-n -wd $HOME' \
-      --set _JAVA_OPTIONS '-Dawt.useSystemAAFontSettings=lcd'
+    # GTK_THEME is not just set to adwaita, but to the *light* adwaita because otherwise the application is sort of unusable. the terminal still has unreadable text though (light on light).
+    makeWrapper ${jre}/bin/java $out/bin/${pname} \
+      --set GTK_THEME Adwaita \
+      --set _JAVA_OPTIONS '-Dawt.useSystemAAFontSettings=lcd' \
+      --add-flags "-jar $out/share/${pname}/${pname}.jar" \
 
     runHook postInstall
   '';
 
   postInstall = ''
-    mimetypeDir=$out/share/
-    install -D ${mimetype_xml} $out/share/mime/packages/application-filius-project.xml
-    install -D ${icon32} $out/share/icons/hicolor/32x32/mimetypes/filius32.png
+    # TODO: why are we setting the permissions here? the nix store is read only anyway
+    install -Dm644 src/deb/application-filius-project.xml $out/share/mime/packages/application-filius-project.xml
 
+    install -Dm444 src/deb/filius32.png $out/share/icons/hicolor/32x32/mimetypes/filius.png
+    install -Dm444 src/deb/filius32.png $out/share/icons/hicolor/32x32/apps/filius.png
     install -Dm444 ${icon128} $out/share/icons/hicolor/128x128/apps/filius.png
-    install -Dm444 ${icon32} $out/share/icons/hicolor/32x32/apps/filius.png
+
+    mkdir -p $out/share/man/man1/
+    cp src/deb/filius.1 $out/share/man/man1/
+
+    mkdir -p $out/share/applications
+    cp src/deb/filius.desktop $out/share/applications/
   '';
 
   meta = {
-    homepage = "https://www.lernsoftware-filius.de";
+    homapage = "https://www.lernsoftware-filius.de/";
+    # note, the gitlab repo page is *not* the homepage and there is not meta attribute for their git forge page
     downloadPage = "https://www.lernsoftware-filius.de/Herunterladen";
-    description = "A Computer Network Simulator for Secondary Schools";
+    description = "A computer network simulator for secondary schools";
     longDescription = ''
       With the software tool Filius, you can design computer networks yourself,
       simulate the exchange of messages in them and thus explore their structure
-      and functionality experimentally. The target group are learners at secondary
-      level in general education schools. Filius enables learning activities that
-      are designed to support discovery-based learning in particular.";
+      and functionality experimentally. The target group are pupils at secondary
+      schools (general education). Filius enables learning activities that
+      are designed to support discovery-based learning in particular.
     '';
     license = with lib.licenses; [
       gpl2Only
@@ -121,5 +126,6 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     ];
     platforms = lib.platforms.all;
     mainProgram = "filius";
+    sourceProvenance = [ lib.sourceTypes.fromSource ];
   };
-})
+}
