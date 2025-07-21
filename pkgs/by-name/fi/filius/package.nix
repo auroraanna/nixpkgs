@@ -49,31 +49,6 @@ maven.buildMavenPackage {
     copyDesktopItems
   ];
 
-  # using provided .desktop file instead
-  # TODO: upstream additions to .desktop file
-  # made a MR: https://gitlab.com/filius1/filius/-/merge_requests/41
-  /*desktopItems = [
-    (makeDesktopItem {
-      type = "Application";
-      name = "filius";
-      desktopName = "Filius";
-      genericName = "Computer network simulator";
-      comment = "A computer network simulator for secondary schools";
-      icon = "filius";
-      exec = "filius";
-      terminal = false;
-      mimeTypes = [ "application/filius-project" ];
-      categories = [ "Education" ];
-      startupNotify = false;
-      extraConfig = {
-        "GenericName[en]" = "Computer network simulator";
-        "GenericName[de]" = "Computernetzwerk-Simulator";
-        "Comment[en]" = "A computer network simulator for secondary schools";
-        "Comment[de]" = "Ein Computernetzwerk-Simulator für Bildungszwecke";
-      };
-    })
-  ];*/
-
   installPhase = ''
     runHook preInstall
 
