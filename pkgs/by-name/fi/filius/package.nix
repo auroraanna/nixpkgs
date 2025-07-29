@@ -11,12 +11,6 @@
 let
   pname = "filius";
   version = "2.9.3";
-  # TODO: ask upstream maintainers to add the 128px icon to the filius repo on gitlab
-  # asked (https://gitlab.com/filius1/filius/-/issues/130)
-  icon128 = fetchurl {
-    url = "https://www.lernsoftware-filius.de/.cm4all/uproc.php/0/.filius128.png/picture-1200?_=17db3de0a08";
-    hash = "sha256-+qJ963SyIAMylDOAAbD/v1qZl1Z3PQIi1FgsTp0e6i4=";
-  };
 in
 maven.buildMavenPackage {
   inherit pname version;
@@ -70,7 +64,6 @@ maven.buildMavenPackage {
 
     install -Dm444 src/deb/filius32.png $out/share/icons/hicolor/32x32/mimetypes/filius.png
     install -Dm444 src/deb/filius32.png $out/share/icons/hicolor/32x32/apps/filius.png
-    install -Dm444 ${icon128} $out/share/icons/hicolor/128x128/apps/filius.png
 
     mkdir -p $out/share/man/man1/
     cp src/deb/filius.1 $out/share/man/man1/
