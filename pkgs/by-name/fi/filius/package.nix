@@ -74,7 +74,7 @@ maven.buildMavenPackage {
   passthru.updateScript = nix-update-script { };
 
   meta = {
-    homapage = "https://www.lernsoftware-filius.de/";
+    homepage = "https://www.lernsoftware-filius.de/";
     # note, the gitlab repo page is *not* the homepage and there is not meta attribute for their git forge page
     downloadPage = "https://www.lernsoftware-filius.de/Herunterladen";
     description = "A computer network simulator for secondary schools";
