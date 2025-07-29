@@ -7,6 +7,8 @@
 , maven
 , fetchFromGitLab
 , fetchurl
+, nix-update-script
+, wrapGAppsHook3
 }:
 let
   pname = "filius";
@@ -36,6 +38,7 @@ maven.buildMavenPackage {
   nativeBuildInputs = [
     makeWrapper
     copyDesktopItems
+    wrapGAppsHook3
   ];
 
   installPhase = ''
@@ -67,6 +70,8 @@ maven.buildMavenPackage {
     mkdir -p $out/share/applications
     cp src/deb/filius.desktop $out/share/applications/
   '';
+
+  passthru.updateScript = nix-update-script { };
 
   meta = {
     homapage = "https://www.lernsoftware-filius.de/";
