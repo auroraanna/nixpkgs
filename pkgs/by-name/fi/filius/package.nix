@@ -45,8 +45,10 @@ maven.buildMavenPackage {
     cp -r ./target/* $out/share/${pname}
 
     # GTK_THEME is not just set to adwaita, but to the *light* adwaita because otherwise the application is sort of unusable. the terminal still has unreadable text though (light on light).
+    # Without _JAVA_AWT_WM_NONREPARENTING, if you launch filius, it's just a white window, i.e. broken.
     makeWrapper ${jre}/bin/java $out/bin/${pname} \
-      --set GTK_THEME Adwaita \
+      --set GTK_THEME 'Adwaita' \
+      --set _JAVA_AWT_WM_NONREPARENTING '1' \
       --set _JAVA_OPTIONS '-Dawt.useSystemAAFontSettings=lcd' \
       --add-flags "-jar $out/share/${pname}/${pname}.jar" \
 
