@@ -30,11 +30,6 @@ maven.buildMavenPackage {
   doCheck = false;
 
   postPatch = ''
-    # seems like the developers don't understand how icons work in freedesktop
-    # TODO: upstream
-    # made a MR: https://gitlab.com/filius1/filius/-/merge_requests/41
-    substituteInPlace src/deb/application-filius-project.xml --replace '<icon name="filius32"/>' '<icon name="filius"/>'
-    substituteInPlace src/deb/filius.desktop --replace 'Icon=filius32' 'Icon=filius'
     substituteInPlace src/deb/filius.desktop --replace 'Exec=/usr/share/filius/filius.sh' 'Exec=filius'
   '';
 
