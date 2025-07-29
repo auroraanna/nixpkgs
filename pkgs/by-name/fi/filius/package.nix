@@ -54,8 +54,7 @@ maven.buildMavenPackage {
   '';
 
   postInstall = ''
-    # TODO: why are we setting the permissions here? the nix store is read only anyway
-    install -Dm644 src/deb/application-filius-project.xml $out/share/mime/packages/application-filius-project.xml
+    install -Dm444 src/deb/application-filius-project.xml $out/share/mime/packages/application-filius-project.xml
 
     install -Dm444 src/deb/filius32.png $out/share/icons/hicolor/80x56/mimetypes/filius.png
     install -Dm444 src/deb/filius32.png $out/share/icons/hicolor/80x56/apps/filius.png
