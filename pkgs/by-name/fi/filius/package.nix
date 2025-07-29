@@ -10,7 +10,7 @@
 }:
 let
   pname = "filius";
-  version = "2.9.3";
+  version = "2.9.4";
 in
 maven.buildMavenPackage {
   inherit pname version;
@@ -20,7 +20,7 @@ maven.buildMavenPackage {
     repo = pname;
     # they seem to have stopped using the "v" prefix since 2.9.3
     tag = version;
-    hash = "sha256-izF41keZjpefHmHNeWI9gXfpMcFscYnSNu/et7GOXXc=";
+    hash = "sha256-nQyDPLDQe5kFH3PhCmLqAt8kVnitPwX5K3xLnyntF5k=";
   };
 
   mvnHash = "sha256-6Qq/7vgA9bWQK+k66qORNwvLKMR1U5yb95DJMWaDq/k=";
