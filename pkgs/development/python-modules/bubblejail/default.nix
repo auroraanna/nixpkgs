@@ -8,6 +8,7 @@
   libnotify,
   desktop-file-utils,
   scdoc,
+  qt6,
 }:
 python3.pkgs.buildPythonPackage rec {
   pname = "bubblejail";
@@ -42,16 +43,23 @@ python3.pkgs.buildPythonPackage rec {
     libseccomp
     libnotify
     desktop-file-utils
+    qt6.qtbase
   ];
 
   nativeBuildInputs = [
     # scdoc
     python3.pkgs.jinja2
+
+    qt6.wrapQtAppsHook
   ];
 
   pythonImportsCheck = [
     "bubblejail"
   ];
+
+  postInstall = ''
+    chmod +x $out/bin/{bubblejail,bubblejail-config}
+  '';
 
   meta = {
     description = "Bubblewrap based sandboxing for desktop applications";
